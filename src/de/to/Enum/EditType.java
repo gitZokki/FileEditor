@@ -5,7 +5,7 @@ import java.util.Map;
 
 public enum EditType {
 	
-	REPLACE("Replace");
+	FIND("Find"), REPLACE("Replace"), FORMATTER("Formatter");
 	
 	private static final Map<String, EditType> lookup = new HashMap<String, EditType>();
 	
@@ -14,27 +14,27 @@ public enum EditType {
 	EditType(String display) {
 		this.display = display;
 	}
-
-    static {
-        for (EditType type : EditType.values()) {
-            lookup.put(type.getDisplay(), type);
-        }
-    }
-
-    public String getDisplay() {
-        return display;
-    }
 	
-	public static String[] getDisplayString() {
+	static {
+		for(EditType type : EditType.values()) {
+			lookup.put(type.getDisplay(), type);
+		}
+	}
+	
+	public String getDisplay() {
+		return display;
+	}
+	
+	public static String[] getDisplayStrings() {
 		EditType[] types = EditType.values();
 		String[] strings = new String[types.length];
-		for (int i = 0; i < types.length; i++) {
+		for(int i = 0; i < types.length; i++) {
 			strings[i] = types[i].display;
 		}
 		return strings;
 	}
 	
-    public static EditType get(String display) {
-        return lookup.get(display);
-    }
+	public static EditType getByDisplay(String display) {
+		return lookup.get(display);
+	}
 }
