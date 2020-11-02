@@ -1,24 +1,99 @@
 package de.to.Runable;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.util.Stack;
+import java.io.FileReader;
+import java.io.FileWriter;
 
-public class RunFormatter implements Runnable{
+import de.to.Utils.CaseString;
 
-	Stack<File> files;
+public class RunFormatter extends AbstractRun {
 	
-	boolean constructor = false;
+	boolean isInConstructor = false;
 	
-	public RunFormatter(Stack<File> files) {
-		this.files = files;
+	public RunFormatter(File file) {
+		super(file);
 	}
 	
 	@Override
 	public void run() {
-		formatterVariabelOfFile();
-	}
-
-	private void formatterVariabelOfFile() {
+		formatterImport();
+		formatterSymbols();
+			
+		openFile();
 	}
 	
+	private void formatterImport() {
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			File f = new File(file.getAbsolutePath() + "-copy");
+			BufferedWriter bw = new BufferedWriter(new FileWriter(f));
+			
+			br.lines().forEach(line -> {
+				try {
+					if(!line.startsWith("import")) {
+						bw.append(line);
+						bw.newLine();
+						return;
+					}
+					String old = line;
+					
+					line = CaseString.replaceAll(line, "(\s*(\\{)\s*)", " {");
+					line = CaseString.replaceAll(line, "(\s*(\\})\s*)", "} ");
+					line = CaseString.replaceAll(line, "(\s*(from)\s*)", " from ");
+					line = CaseString.replaceAll(line, "(\s*(import)\s*)", "import ");
+					line = CaseString.replaceAll(line, "(\s*(;)\s*)", ";");
+					line = CaseString.replaceAll(line, "(\s*(,)\s*)", ", ");
+					
+					if(old.contentEquals(line)) { edited = file; }
+					
+					bw.append(line);
+					bw.newLine();
+				} catch(Exception e) {
+					e.printStackTrace();
+				}
+			});
+			bw.close();
+			br.close();
+			file.delete();
+			f.renameTo(file);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void formatterSymbols() {
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(file));
+			File f = new File(file.getAbsolutePath() + "-copy");
+			BufferedWriter bw = new BufferedWriter(new FileWriter(f));
+			
+			br.lines().forEach(line -> {
+				try {
+					if(line.startsWith("import")) {
+						bw.append(line);
+						bw.newLine();
+						return;
+					}
+					String old = line;
+					
+					line = CaseString.replaceAll(line, "(\s*(\\()\s*)", "(");
+					
+					if(old.contentEquals(line)) { edited = file; }
+					
+					bw.append(line);
+					bw.newLine();
+				} catch(Exception e) {
+					e.printStackTrace();
+				}
+			});
+			bw.close();
+			br.close();
+			file.delete();
+			f.renameTo(file);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
 }

@@ -6,20 +6,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileFilter;
+import java.util.List;
 import java.util.Stack;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 
 import de.to.FileEditor;
 import de.to.Enum.ComponentNames;
 import de.to.Enum.EditType;
 import de.to.Gui.Gui;
-import de.to.Runable.RunFormatter;
+import de.to.Utils.Optionals;
 
-public class ActionListeners {
+public class Listeners {
 	
 	public ActionListener getOptionsBoxListener(JComboBox<String> optionsBox) {
 		return new ActionListener() {
@@ -27,7 +27,7 @@ public class ActionListeners {
 			public void actionPerformed(ActionEvent e) {
 				Gui gui = FileEditor.getGuiInstance();
 				JCheckBox openFile = (JCheckBox) getComponentFromGuiWithName(ComponentNames.CHECK_OPENFILE);
-				setStandardCheckBox(openFile);
+				openFile.setText("<html>Open edited file</html>");
 				
 				switch(EditType.getByDisplay((String) optionsBox.getSelectedItem())) {
 					case REPLACE:
@@ -35,7 +35,6 @@ public class ActionListeners {
 						break;
 					
 					case FIND:
-						openFile.setSelected(true);
 						openFile.setText("<html>Open founded files</html>");
 						gui.addFindComponents();
 						break;
@@ -43,7 +42,7 @@ public class ActionListeners {
 					case FORMATTER:
 						gui.addFormatterComponents();
 						break;
-						
+					
 					default:
 						break;
 				}
@@ -51,58 +50,11 @@ public class ActionListeners {
 		};
 	}
 	
-	public ActionListener getFilesListener() {
-		return new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser chooser = new JFileChooser("C:\\Developement\\git"); // TODO properties
-				chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-				chooser.showOpenDialog(null);
-				
-				File selectedFile = chooser.getSelectedFile();
-				if(selectedFile != null) {
-					((JButton) getComponentFromGuiWithName(ComponentNames.BTN_FILESELECT)).setText(chooser.getSelectedFile().getAbsolutePath());
-					@SuppressWarnings("unchecked")
-					JComboBox<String> optionsBox = (JComboBox<String>) getComponentFromGuiWithName(ComponentNames.BOX_OPTIONS);
-					optionsBox.setVisible(true);
-					optionsBox.setSelectedIndex(0);
-					getComponentFromGuiWithName(ComponentNames.PANEL_OPTIONALS).setVisible(true);
-				}
-			}
-		};
+	protected List<File> getAllFiles() {
+		return getAllFiles(new File(((JButton) getComponentFromGuiWithName(ComponentNames.BTN_FILESELECT)).getText()));
 	}
 	
-	public ActionListener getButtonListener(EditType type) {
-		return new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				
-				switch(type) {
-					case REPLACE:
-						getAllFiles(null);
-						break;
-					
-					case FIND:
-						getAllFiles(null);
-						break;
-					
-					case FORMATTER:
-						new Thread(new RunFormatter(getAllFiles(null))).start();
-						break;
-						
-					default:
-						break;
-				}
-			}
-		};
-	}
-	
-	private void setStandardCheckBox(JCheckBox openFile) {
-		openFile.setText("<html>Open edited file</html>");
-		openFile.setSelected(false);
-	}
-	
-	private Component getComponentFromGuiWithName(ComponentNames name) {
+	protected Component getComponentFromGuiWithName(ComponentNames name) {
 		return getComponentFromGuiWithName(name.getName());
 	}
 	
@@ -121,14 +73,21 @@ public class ActionListeners {
 		return com;
 	}
 	
-	private Stack<File> getAllFiles(File file) {
-		Stack<File> fileStack = new Stack<File>();
-
-		file.listFiles(new FileFilter() {			
+	private List<File> getAllFiles(File file) {
+		List<File> fileStack = new Stack<File>();
+		
+		file.listFiles(new FileFilter() {
 			@Override
 			public boolean accept(File pathname) {
-				if(pathname.isFile()) {
-					fileStack.push(pathname);
+				Optionals optionals = Optionals.getInstance();
+				String fileEnding = optionals.getFileEnding();
+				String fileDontContain = optionals.getFileNameNotContain();
+				
+				if(fileDontContain == null) { fileDontContain = "*?<>\\|:/\""; }
+				if(fileEnding == null) { fileEnding = ""; }
+				
+				if(pathname.isFile() && !pathname.getName().contains(fileDontContain) && pathname.getName().endsWith(fileEnding)) {
+					fileStack.add(pathname);
 					return false;
 				} else {
 					fileStack.addAll(getAllFiles(pathname));

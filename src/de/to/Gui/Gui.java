@@ -19,7 +19,15 @@ import javax.swing.border.Border;
 
 import de.to.Enum.ComponentNames;
 import de.to.Enum.EditType;
-import de.to.Listeners.ActionListeners;
+import de.to.Listeners.Listeners;
+import de.to.Listeners.ButtonListener.ButtonFilesListener;
+import de.to.Listeners.ButtonListener.ButtonFindListener;
+import de.to.Listeners.ButtonListener.ButtonFormatterListener;
+import de.to.Listeners.ButtonListener.ButtonReplaceListener;
+import de.to.Listeners.CheckListener.CheckCaseSensitiveListener;
+import de.to.Listeners.CheckListener.CheckOpenFileListener;
+import de.to.Listeners.TextListener.TextFileDontContainListener;
+import de.to.Listeners.TextListener.TextFileEndingListener;
 import de.to.Utils.GetComponentWithName;
 
 public class Gui extends JFrame {
@@ -58,17 +66,21 @@ public class Gui extends JFrame {
 		
 		JTextField fileEnding = new GetComponentWithName<JTextField>(new JTextField(), ComponentNames.TEXT_FILEENDING).build();
 		fileEnding.setBorder(BorderFactory.createTitledBorder("File ending?"));
+		fileEnding.addFocusListener(new TextFileEndingListener().getTextFileEndingListener());
 		
 		JTextField fileDontContain = new GetComponentWithName<JTextField>(new JTextField(), ComponentNames.TEXT_FILEDONTCONTAIN).build();
-		fileDontContain.setBorder(BorderFactory.createTitledBorder("Filename dont contain?"));
+		fileDontContain.setBorder(BorderFactory.createTitledBorder("Filename don't contain?"));
+		fileDontContain.addFocusListener(new TextFileDontContainListener().getTextFileDontContainListener());
 		
 		JPanel checkBoxs = new JPanel();
 		checkBoxs.setLayout(getLayout(2, 0));
 		
 		JCheckBox openFile = new GetComponentWithName<JCheckBox>(new JCheckBox(), ComponentNames.CHECK_OPENFILE).build();
+		openFile.addActionListener(new CheckOpenFileListener().getCheckBoxOpenFileListener(openFile));
 		
 		JCheckBox caseSensitive = new GetComponentWithName<JCheckBox>(new JCheckBox(), ComponentNames.CHECK_CASESENSITIVE).build();
 		caseSensitive.setText("<html>use case sensitive</html>");
+		caseSensitive.addActionListener(new CheckCaseSensitiveListener().getCheckBoxCaseSensitiveListener(caseSensitive));
 		
 		checkBoxs.add(openFile);
 		checkBoxs.add(caseSensitive);
@@ -77,9 +89,9 @@ public class Gui extends JFrame {
 		optionals.add(fileDontContain);
 		optionals.add(checkBoxs);
 		
-		optionsBox.addActionListener(new ActionListeners().getOptionsBoxListener(optionsBox));
+		optionsBox.addActionListener(new Listeners().getOptionsBoxListener(optionsBox));
 		
-		files.addActionListener(new ActionListeners().getFilesListener());
+		files.addActionListener(new ButtonFilesListener().getButtonFilesListener());
 		
 		panel.add(files);
 		panel.add(optionsBox);
@@ -91,32 +103,33 @@ public class Gui extends JFrame {
 	}
 	
 	public void addReplaceComponents() {
-		System.out.println("Gui.addReplaceComponents()");
-		JTextField find = new JTextField();
+		JTextField find = new GetComponentWithName<JTextField>(new JTextField(), ComponentNames.TEXT_REPLACE).build();
 		find.setBorder(BorderFactory.createTitledBorder("Find"));
+		
 		JTextField replaceWith = new JTextField();
 		replaceWith.setBorder(BorderFactory.createTitledBorder("Replace with"));
 		
-		JButton ok = new JButton("Replace");
+		JButton replace = new JButton("Replace");
+		replace.addActionListener(new ButtonReplaceListener().getButtonReplaceListener());
 		
-		addCompoents(3, 0, find, replaceWith, ok);
+		addCompoents(3, 0, find, replaceWith, replace);
 	}
 	
 	public void addFindComponents() {
-		System.out.println("Gui.addFindComponents()");
-		JTextField find = new JTextField();
-		find.setBorder(BorderFactory.createTitledBorder("Find"));
+		JTextField text = new GetComponentWithName<JTextField>(new JTextField(), ComponentNames.TEXT_FIND).build();
+		text.setBorder(BorderFactory.createTitledBorder("Find"));
 		
-		JButton ok = new JButton("Find");
+		JButton find = new JButton("Find");
+		find.addActionListener(new ButtonFindListener().getButtonFindListener());
 		
-		addCompoents(2, 0, find, ok);
+		addCompoents(2, 0, text, find);
 	}
 	
 	public void addFormatterComponents() {
-		System.out.println("Gui.addFormatterComponents()");
-		JButton ok = new JButton("Formatter");
+		JButton formatter = new JButton("Formatter");
+		formatter.addActionListener(new ButtonFormatterListener().getButtonFormatterListener());
 		
-		addCompoents(3, 0, Box.createVerticalGlue(), ok);
+		addCompoents(3, 0, Box.createVerticalGlue(), formatter);
 	}
 	
 	private void addCompoents(int rows, int cols, Component... comps) {
@@ -143,15 +156,13 @@ public class Gui extends JFrame {
 	
 	@SuppressWarnings("unused")
 	private List<Component> getAllComponents(Container container) {
-	    Component[] comps = container.getComponents();
-	    List<Component> compList = new ArrayList<Component>();
-	    for (Component comp : comps) {
-	    	compList.add(comp);
-	        if (comp instanceof Container) {
-	            compList.addAll(getAllComponents((Container) comp));
-	        }
-	    }
-	    return compList;
+		Component[] comps = container.getComponents();
+		List<Component> compList = new ArrayList<Component>();
+		for(Component comp : comps) {
+			compList.add(comp);
+			if(comp instanceof Container) { compList.addAll(getAllComponents((Container) comp)); }
+		}
+		return compList;
 	}
 	
 	private Border getBorder(int top, int left, int bottom, int right) {
