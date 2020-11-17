@@ -8,16 +8,18 @@ import javax.swing.JTextField;
 import de.to.Enum.ComponentNames;
 import de.to.Listeners.Listeners;
 import de.to.Utils.Optionals;
+import de.to.Utils.Finder.ComponentsFinder;
 
-public class TextFileDontContainListener extends Listeners{
-	
-	public FocusAdapter getTextFileDontContainListener() {
-		return new FocusAdapter() {
-			@Override
-			public void focusLost(FocusEvent e) {
-				JTextField fileEnding = (JTextField) getComponentFromGuiWithName(ComponentNames.TEXT_FILEDONTCONTAIN);
-				Optionals.getInstance().setFileNameNotContain(fileEnding.getText());
-			}
-		};
-	}
+public class TextFileDontContainListener extends Listeners {
+
+    public FocusAdapter getTextFileDontContainListener() {
+	return new FocusAdapter() {
+	    @Override
+	    public void focusLost(FocusEvent e) {
+		JTextField fileEnding = new ComponentsFinder<JTextField>()
+			.getComponentFromGuiWithName(ComponentNames.TEXT_FILEDONTCONTAIN);
+		Optionals.getInstance().setFileNameNotContain(fileEnding.getText());
+	    }
+	};
+    }
 }

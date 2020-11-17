@@ -9,15 +9,14 @@ import de.to.Listeners.Listeners;
 import de.to.Utils.Optionals;
 
 public class CheckCaseSensitiveListener extends Listeners {
-	
-	public ActionListener getCheckBoxCaseSensitiveListener(JCheckBox box) {
-		return new ActionListener() {
-			Optionals optionals = Optionals.getInstance();
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				optionals.setCaseSensitive(box.isSelected());
-			}
-		};
-	}
+
+    public ActionListener getCheckBoxCaseSensitiveListener(JCheckBox box) {
+	return new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent e) {
+		Optionals optionals = Optionals.getInstance();
+		optionals.setCaseSensitive(box.isSelected());
+	    }
+	};
+    }
 }

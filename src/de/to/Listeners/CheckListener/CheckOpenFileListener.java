@@ -9,15 +9,14 @@ import de.to.Listeners.Listeners;
 import de.to.Utils.Optionals;
 
 public class CheckOpenFileListener extends Listeners {
-	
-	public ActionListener getCheckBoxOpenFileListener(JCheckBox box) {
-		return new ActionListener() {
-			Optionals optionals = Optionals.getInstance();
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				optionals.setOpenFile(box.isSelected());
-			}
-		};
-	}
+
+    public ActionListener getCheckBoxOpenFileListener(JCheckBox box) {
+	return new ActionListener() {
+	    @Override
+	    public void actionPerformed(ActionEvent e) {
+		Optionals optionals = Optionals.getInstance();
+		optionals.setOpenFile(box.isSelected());
+	    }
+	};
+    }
 }
