@@ -1,35 +1,31 @@
 package de.to.Runable;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-
-import de.to.Utils.ZString;
+import java.nio.file.Path;
 
 public class RunFind extends AbstractRun {
 
     String find;
 
-    public RunFind(File file, String find) {
-	super(file);
-	this.find = ZString.checkCaseSens(find);
+    public RunFind(Path path, String find) {
+	super(path);
+	initReader();
+	this.find = find;
     }
 
     @Override
     public void run() {
 	findInFile();
-
+	
+	closeReder();
 	openFile();
     }
 
     private void findInFile() {
 	try {
-	    BufferedReader br = new BufferedReader(new FileReader(file));
-
 	    String string;
 	    while ((string = br.readLine()) != null) {
-		if (ZString.checkCaseSens(string).contains(find)) {
-		    edited = file;
+		if (string.contains(find)) {
+		    edited = path;
 		    break;
 		}
 	    }

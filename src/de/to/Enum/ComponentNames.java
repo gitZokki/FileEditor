@@ -7,7 +7,6 @@ public enum ComponentNames {
     TEXT_FILEENDING("file_ending"), //
     TEXT_FILEDONTCONTAIN("file_dont_contain"), //
     CHECK_OPENFILE("openfile"), //
-    CHECK_CASESENSITIVE("case_sensitive"), //
     TEXT_FIND("find_text"), //
     TEXT_REPLACE("replace_text");
 

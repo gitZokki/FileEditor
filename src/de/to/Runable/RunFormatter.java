@@ -1,209 +1,260 @@
 package de.to.Runable;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.nio.file.Path;
+import java.util.Arrays;
 
 public class RunFormatter extends AbstractRun {
 
-    boolean isInConstructor = false;
+    private final String lineSeperator = System.getProperty("line.separator");
+    private String className = null;
+    private String line = "";
 
-    public RunFormatter(File file) {
-	super(file);
-	System.out.println(file);
+    private String constructorLine = "";
+
+    private int inConstructor = 0;
+
+    public RunFormatter(Path path) {
+	super(path);
+	initReaderAndWriter();
     }
 
     @Override
     public void run() {
-	formatterImport();
-	formatterSymbols();
-	formatterVariables();
+	br.lines().forEach(line -> {
+	    if (line.matches("[\s\t]*console.log\\(.*[);]")) {
+		return;
+	    }
 
+	    if (line.matches("(export [a-zA-Z ]*class .*\\{)")) {
+		String[] lineArray = line.split("[ <]");
+		className = lineArray[Arrays.asList(lineArray).indexOf("class") + 1];
+	    }
+
+	    final String old = line;
+	    this.line = line;
+
+	    anyFormatter();
+
+	    if (line.startsWith("import")) {
+		importFormatter();
+	    } else if (!line.startsWith("//")) {
+		if (!otherFormatter()) {
+		    return;
+		}
+	    }
+
+	    checkAndSetEdited(old, line);
+	    append();
+	});
+
+	closeReaderAndWriter();
 	openFile();
     }
 
-    private void formatterImport() {
+    private void append() {
 	try {
-	    BufferedReader br = new BufferedReader(new FileReader(file));
-	    File f = new File(file.getAbsolutePath() + "-copy");
-	    BufferedWriter bw = new BufferedWriter(new FileWriter(f));
-
-	    br.lines().forEach(line -> {
-		try {
-		    if (!line.startsWith("import")) {
-			bw.append(line);
-			bw.newLine();
-			return;
-		    }
-		    String old = line;
-
-		    line = line.replaceAll("(\s*(\\{)\s*)", " {");
-		    line = line.replaceAll("(\s*(\\})\s*)", "} ");
-		    line = line.replaceFirst("(\s*(from)\s*)", " from ");
-		    line = line.replaceAll("(\s*(import)\s*)", "import ");
-		    line = line.replaceAll("(\s*(;)\s*)", ";");
-		    line = line.replaceAll("(\s*(,)\s*)", ", ");
-
-		    if (line.endsWith("\"") || line.endsWith("'")) {
-			line += ";";
-		    }
-
-		    line = line.replaceAll("\"", "'");
-
-		    if (old.contentEquals(line)) {
-			edited = file;
-		    }
-
-		    bw.append(line);
-		    bw.newLine();
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
-	    });
-	    bw.close();
-	    br.close();
-	    file.delete();
-	    f.renameTo(file);
+	    bw.append(line);
+	    bw.newLine();
 	} catch (Exception e) {
 	    e.printStackTrace();
+	}
+    }
+
+    private void anyFormatter() {
+	if (!line.contains("return val.replace(/[")) {
+	    line = line.replaceAll("\"", "'");
+	}
+	if (inConstructor == 0) {
+	    line = line.replaceAll("  ", "\t");
+	    line = line.replaceAll("\t\tpublic", "\tpublic");
+	    line = line.replaceAll("\t\tprivat", "\tprivat");
+	    line = line.replaceAll("\t\tprotected", "\tprotected");
+	    line = line.replaceAll("\t\tconstructor", "\tconstructor");
+	}
+    }
+
+    private void importFormatter() {
+	formatterImport();
+    }
+
+    private boolean otherFormatter() {
+	formatterSymbols();
+	formatterVariables();
+	formatterLogging();
+
+	if (line.contains("constructor(") || inConstructor != 0) {
+	    if (formatterConstructor()) {
+		return false;
+	    }
+	}
+
+	return true;
+    }
+
+    private void formatterImport() {
+	line = line.replaceAll("(\s*(\\{)\s*)", " {");
+	line = line.replaceAll("(\s*(\\})\s*)", "} ");
+	line = line.replaceFirst("(\s*(from)\s*)", " from ");
+	line = line.replaceAll("(\s*(import)\s*)", "import ");
+	line = line.replaceAll("(\s*(;))", ";");
+	line = line.replaceAll("(\s*(,)\s*)", ", ");
+
+	if (line.endsWith("'")) {
+	    line += ";";
 	}
     }
 
     private void formatterSymbols() {
-	try {
-	    BufferedReader br = new BufferedReader(new FileReader(file));
-	    File f = new File(file.getAbsolutePath() + "-copy");
-	    BufferedWriter bw = new BufferedWriter(new FileWriter(f));
-
-	    br.lines().forEach(line -> {
-		try {
-		    if (line.startsWith("import") || line.startsWith("//")) {
-			bw.append(line);
-			bw.newLine();
-			return;
-		    }
-		    String old = line;
-
-		    if (!line.contains(">") && !line.contains("<") && !line.contains("!")) {
-			if (line.contains("===")) {
-			    line = line.replaceAll("(\s*(===)\s*)", " === ");
-			} else if (line.contains("==")) {
-			    line = line.replaceAll("(\s*(===)\s*)", " == ");
-			} else if (line.contains("=")) {
-			    line = line.replaceAll("(\s*[=]\s*)", " = ");
-			}
-		    }
-
-		    if (line.contains(">") || line.contains("<") || line.contains("!")) {
-			if (line.contains(">=")) {
-			    line = line.replaceAll("(\s*(>=)\s*)", " >= ");
-			} else if (line.contains("<=")) {
-			    line = line.replaceAll("(\s*(<=)\s*)", " <= ");
-			} else if (line.contains("=>")) {
-			    line = line.replaceAll("(\s*(=>)\s*)", " => ");
-			} else if (line.contains("!==")) {
-			    line = line.replaceAll("(\s*(!==)\s*)", " !== ");
-			} else if (line.contains("!=")) {
-			    line = line.replaceAll("(\s*(!=)\s*)", " !== ");
-			}
-		    }
-
-		    if (line.contains("public ") || line.contains("protected ") || line.contains("private ")
-			    || line.contains("@Input() ") || line.contains("@Output() ")) {
-			line = line.replaceAll("(\s*[:]\s*)", ": ");
-		    }
-
-		    line = line.replaceAll("([\\(]\s*)", "(");
-		    line = line.replaceAll("(\s*[;]\s*)", ";");
-		    line = line.replaceAll("([\\[]\s*[\\]])", "[]");
-
-		    line = line.replaceAll("\"", "'");
-
-		    if (old.contentEquals(line)) {
-			edited = file;
-		    }
-
-		    bw.append(line);
-		    bw.newLine();
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
-	    });
-	    bw.close();
-	    br.close();
-	    file.delete();
-	    f.renameTo(file);
-	} catch (Exception e) {
-	    e.printStackTrace();
+	if (!line.contains(">") && !line.contains("<") && !line.contains("!")) {
+	    if (line.contains("===")) {
+		line = line.replaceAll("(\s*(===)\s*)", " === ");
+	    } else if (line.contains("==")) {
+		line = line.replaceAll("(\s*(==)\s*)", " === ");
+	    } else if (line.contains("=")) {
+		line = line.replaceAll("(\s*[=]\s*)", " = ");
+	    }
 	}
+
+	if (line.contains(">") || line.contains("<") || line.contains("!")) {
+	    if (line.contains(">=")) {
+		line = line.replaceAll("(\s*(>=)\s*)", " >= ");
+	    } else if (line.contains("<=")) {
+		line = line.replaceAll("(\s*(<=)\s*)", " <= ");
+	    } else if (line.contains("=>")) {
+		line = line.replaceAll("(\s*(=>)\s*)", " => ");
+	    } else if (line.contains("!==")) {
+		line = line.replaceAll("(\s*(!==)\s*)", " !== ");
+	    } else if (line.contains("!=")) {
+		line = line.replaceAll("(\s*(!=)\s*)", " !== ");
+	    }
+	}
+
+	if (line.contains("public ") || line.contains("protected ") || line.contains("private ")
+		|| line.contains("@Input() ") || line.contains("@Output() ")) {
+	    line = line.replace("(\s*[:]\s*)", ": ");
+	}
+
+	line = line.replaceAll("([\\(]\s*)", "(");
+	line = line.replaceAll("(\s*[;]\s*)", ";");
+	line = line.replaceAll("([\\[]\s*[\\]])", "[]");
     }
 
     private void formatterVariables() {
-	try {
-	    BufferedReader br = new BufferedReader(new FileReader(file));
-	    File f = new File(file.getAbsolutePath() + "-copy");
-	    BufferedWriter bw = new BufferedWriter(new FileWriter(f));
+	final String GlobalAppDataProvider = "globalAppData";
+	final String LocalAppDataProvider = "localAppData";
+	final String UserDataProvider = "userDataService";
+	final String NetworkStatusServiceProvider = "networkStatus";
+	final String AppEventsProvider = "appEvents";
+	final String MessageTranslationProvider = "translator";
 
-	    br.lines().forEach(line -> {
-		try {
-		    if (line.startsWith("import") || line.startsWith("//")) {
-			bw.append(line);
-			bw.newLine();
-			return;
-		    }
-		    String old = line;
+	line = line.replaceAll("__globalAppDataProvider", GlobalAppDataProvider);
+	line = line.replaceAll("_globalAppDataProvider", GlobalAppDataProvider);
+	line = line.replaceAll("globalAppDataProvider", GlobalAppDataProvider);
+	line = line.replaceAll("globalData", GlobalAppDataProvider);
 
-		    String GlobalAppDataProvider = "globalAppData";
-		    String LocalAppDataProvider = "localAppData";
-		    String UserDataProvider = "userData";
-		    String NetworkStatusServiceProvider = "networkStatus";
-		    String AppEventsProvider = "appEvents";
-		    String MessageTranslationProvider = "translator";
+	line = line.replaceAll("__localAppDataProvider", LocalAppDataProvider);
+	line = line.replaceAll("_localAppDataProvider", LocalAppDataProvider);
+	line = line.replaceAll("localAppDataProvider", LocalAppDataProvider);
+	line = line.replaceAll("localData", LocalAppDataProvider);
 
-		    line = line.replaceAll("__globalAppDataProvider", GlobalAppDataProvider);
-		    line = line.replaceAll("_globalAppDataProvider", GlobalAppDataProvider);
-		    line = line.replaceAll("globalAppDataProvider", GlobalAppDataProvider);
-		    line = line.replaceAll("globalData", GlobalAppDataProvider);
+	line = line.replaceAll("userData", UserDataProvider);
 
-		    line = line.replaceAll("__localAppDataProvider", LocalAppDataProvider);
-		    line = line.replaceAll("_localAppDataProvider", LocalAppDataProvider);
-		    line = line.replaceAll("localAppDataProvider", LocalAppDataProvider);
-		    line = line.replaceAll("localData", LocalAppDataProvider);
+	line = line.replaceAll("networkStatusService", NetworkStatusServiceProvider);
+	line = line.replaceAll("_networkStatusServiceProvider", NetworkStatusServiceProvider);
+	line = line.replaceAll("_networkStatusService", NetworkStatusServiceProvider);
+	line = line.replaceAll("_networkStatusProvider", NetworkStatusServiceProvider);
+	line = line.replaceAll("networkStatusServiceProvider", NetworkStatusServiceProvider);
+	line = line.replaceAll("networkService", NetworkStatusServiceProvider);
 
-		    line = line.replaceAll("userDataService", UserDataProvider);
+	line = line.replaceAll("_appEventsProvider", AppEventsProvider);
+	line = line.replaceAll("appEventsProvider", AppEventsProvider);
+	line = line.replaceAll("eventService", AppEventsProvider);
 
-		    line = line.replaceAll("networkStatusService", NetworkStatusServiceProvider);
-		    line = line.replaceAll("_networkStatusServiceProvider", NetworkStatusServiceProvider);
-		    line = line.replaceAll("_networkStatusProvider", NetworkStatusServiceProvider);
-		    line = line.replaceAll("networkStatusServiceProvider", NetworkStatusServiceProvider);
-		    line = line.replaceAll("networkService", NetworkStatusServiceProvider);
+	line = line.replaceAll("messageTranslationProvider", MessageTranslationProvider);
+	line = line.replaceAll("translationProvider", MessageTranslationProvider);
+	line = line.replaceAll("translationService", MessageTranslationProvider);
+    }
 
-		    line = line.replaceAll("_appEventsProvider", AppEventsProvider);
-		    line = line.replaceAll("appEventsProvider", AppEventsProvider);
-		    line = line.replaceAll("eventService", AppEventsProvider);
+    private void formatterLogging() {
+	if (className != null && !line.contains("alert") && !line.contains("reject(") && !line.contains("resolved(")
+		&& !line.contains("resolve(") && !line.contains("super(") && !line.contains("catch(")
+		&& !line.contains("Timeout(") && !line.contains("switch(") && !line.contains("constructor(")
+		&& !line.contains("Change(")) {
 
-		    line = line.replaceAll("messageTranslationProvider", MessageTranslationProvider);
-		    line = line.replaceAll("translationProvider", MessageTranslationProvider);
-		    line = line.replaceAll("translationService", MessageTranslationProvider);
-
-		    if (old.contentEquals(line)) {
-			edited = file;
-		    }
-
-		    bw.append(line);
-		    bw.newLine();
-		} catch (Exception e) {
-		    e.printStackTrace();
+	    if (line.matches("([\s\ta-zA-Z]*\s*[a-zA-Z<T>]{4,}\\(\\).*\\{)")) {
+		line = line + lineSeperator + "\t\tconsole.log('" + className + " -> "
+			+ line.trim().substring(0, line.indexOf("(")) + ")');";
+	    } else if (line.matches("([\s\t]*[a-zA-Z]*\s*[a-zA-Z<T>]{4,}\\(.*\\).*\\{)")) {
+		line = line.replaceAll("\s*(:)\s*", ": ");
+		if (!line.substring(line.indexOf("("), line.indexOf(")")).contains(":")) {
+		    line = line.replace(")", ": any)");
+		    line = line.replaceAll(",", ": any,");
 		}
-	    });
-	    bw.close();
-	    br.close();
-	    file.delete();
-	    f.renameTo(file);
-	} catch (Exception e) {
-	    e.printStackTrace();
+		String[] lines = line.substring(line.indexOf("("), line.indexOf(")")).split(",");
+		line = line.replaceFirst("[\t\s]*", "\t") + System.getProperty("line.separator") //
+			+ "\t\tconsole.log('" + className + " -> " //
+			+ line.trim().substring(0, line.indexOf("(")) + ")";
+
+		try {
+		    String vars = " [";
+		    for (int i = 0; i < lines.length; i++) {
+			vars += lines[i].substring(lines[i].contains("(") ? lines[i].indexOf("(") + 1 : 0,
+				lines[i].contains(":") ? lines[i].indexOf(":") : lines[i].length());
+			if (i < lines.length - 1) {
+			    vars += ", ";
+			} else {
+			    vars += "]";
+			}
+		    }
+		    line += vars + "', " + vars + ");";
+		} catch (Exception e) {
+		    line += "');";
+		}
+	    }
+
 	}
+    }
+
+    private boolean formatterConstructor() {
+	inConstructor = inConstructor == 2 ? 2 : 1;
+	constructorLine += line.replaceAll("(\\/\\/.*)", "") + lineSeperator;
+	//FIXME
+	if (line.endsWith("{")) {
+	    inConstructor = 2;
+
+	    constructorLine = "\t" + constructorLine.replaceAll("[\t\s\r\n]+", "");
+
+	    if (!constructorLine.contains("protectedconstructor(")) {
+		constructorLine = constructorLine.replaceAll("public", "\t\t\t\tpublic ");
+		constructorLine = constructorLine.replaceAll("private", "\t\t\t\tprivate ");
+		constructorLine = constructorLine.replaceAll("protected", "\t\t\t\tprotected ");
+		constructorLine = constructorLine.replaceAll(",", "," + lineSeperator);
+		constructorLine = constructorLine.replaceAll("\\{", "{");
+		constructorLine = constructorLine.replaceAll("\\}", "\t}");
+		constructorLine = constructorLine.replaceAll(":", ": ");
+		constructorLine = constructorLine.replaceAll("\\)", ") ");
+		constructorLine = constructorLine.replaceFirst("(\\([\s\t]+public)", "(public");
+		constructorLine = constructorLine.replaceFirst("(\\([\s\t]+private)", "(private");
+		constructorLine = constructorLine.replaceFirst("(\\([\s\t]+protected)", "(protected");
+	    } else {
+		constructorLine = constructorLine.replaceAll("private", "\t\t\t\t\t\t  private ");
+		constructorLine = constructorLine.replaceAll("public", "\t\t\t\t\t\t  public ");
+		constructorLine = constructorLine.replaceAll("protected", "\t\t\t\t\t\t  protected ");
+		constructorLine = constructorLine.replaceAll(",", "," + lineSeperator);
+		constructorLine = constructorLine.replaceAll("\\{", "{");
+		constructorLine = constructorLine.replaceAll("\\}", "\t}");
+		constructorLine = constructorLine.replaceAll(":", ": ");
+		constructorLine = constructorLine.replaceAll("\\)", ") ");
+		constructorLine = constructorLine.replaceFirst("[\s\t]+\\([\s\t]+", "(");
+		constructorLine = constructorLine.replaceFirst("([\s\t]+protected)", "\tprotected");
+		constructorLine = constructorLine.replaceFirst("(\\([\s\t]+protected)", "(protected");
+	    }
+
+	    if (line.endsWith("}")) {
+		line = constructorLine;
+		return false;
+	    }
+	}
+	return true;
     }
 }

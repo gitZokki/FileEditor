@@ -2,8 +2,8 @@ package de.to.Listeners.ButtonListener;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -36,8 +36,8 @@ public class ButtonReplaceListener extends Listeners {
 		    return;
 		}
 
-		List<File> files = FileFinder.getAllFilesFromSelectButton();
-		int size = files.size();
+		List<Path> paths = FileFinder.getAllFilesFromSelectButton();
+		int size = paths.size();
 
 		if (size == 0) {
 		    MessageDialog.showNotFoundDialog("No files found");
@@ -70,7 +70,7 @@ public class ButtonReplaceListener extends Listeners {
 				e1.printStackTrace();
 			    }
 			}
-			new Thread(new RunReplace(files.get(i), find, replace)).start();
+			new Thread(new RunReplace(paths.get(i), find, replace)).start();
 		    }
 		    pm.setNote("Task finished");
 		    System.out.println("Time for replacing: " + (System.currentTimeMillis() - start));

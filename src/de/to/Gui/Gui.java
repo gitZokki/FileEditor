@@ -24,7 +24,6 @@ import de.to.Listeners.ButtonListener.ButtonFilesListener;
 import de.to.Listeners.ButtonListener.ButtonFindListener;
 import de.to.Listeners.ButtonListener.ButtonFormatterListener;
 import de.to.Listeners.ButtonListener.ButtonReplaceListener;
-import de.to.Listeners.CheckListener.CheckCaseSensitiveListener;
 import de.to.Listeners.CheckListener.CheckOpenFileListener;
 import de.to.Listeners.TextListener.TextFileDontContainListener;
 import de.to.Listeners.TextListener.TextFileEndingListener;
@@ -82,15 +81,7 @@ public class Gui extends JFrame {
 		.build();
 	openFile.addActionListener(new CheckOpenFileListener().getCheckBoxOpenFileListener(openFile));
 
-	JCheckBox caseSensitive = new GetComponentWithName<JCheckBox>(new JCheckBox(),
-		ComponentNames.CHECK_CASESENSITIVE).build();
-	caseSensitive.setText("<html>use case sensitive</html>");
-	caseSensitive
-		.addActionListener(new CheckCaseSensitiveListener().getCheckBoxCaseSensitiveListener(caseSensitive));
-	caseSensitive.setEnabled(false); // FIXME lel
-
 	checkBoxs.add(openFile);
-	checkBoxs.add(caseSensitive);
 
 	optionals.add(fileEnding);
 	optionals.add(fileDontContain);

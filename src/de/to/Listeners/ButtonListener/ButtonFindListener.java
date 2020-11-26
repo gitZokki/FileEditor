@@ -2,8 +2,8 @@ package de.to.Listeners.ButtonListener;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -34,8 +34,8 @@ public class ButtonFindListener extends Listeners {
 		    return;
 		}
 
-		List<File> files = FileFinder.getAllFilesFromSelectButton();
-		int size = files.size();
+		List<Path> paths = FileFinder.getAllFilesFromSelectButton();
+		int size = paths.size();
 
 		if (size == 0) {
 		    MessageDialog.showNotFoundDialog("No files found");
@@ -68,7 +68,7 @@ public class ButtonFindListener extends Listeners {
 				e1.printStackTrace();
 			    }
 			}
-			new Thread(new RunFind(files.get(i), find)).start();
+			new Thread(new RunFind(paths.get(i), find)).start();
 		    }
 		    pm.setNote("Task finished");
 		    System.out.println("Time for seaching: " + (System.currentTimeMillis() - start));

@@ -8,7 +8,6 @@ public class Optionals {
     private String fileNameNotContain;
 
     private boolean openFile;
-    private boolean caseSensitive;
 
     public Optionals() {
     }
@@ -16,7 +15,6 @@ public class Optionals {
     public static Optionals getInstance() {
 	if (instance == null) {
 	    instance = new Optionals();
-	    instance.setCaseSensitive(false);
 	    instance.setOpenFile(false);
 	    instance.setFileEnding("");
 	    instance.setFileNameNotContain("");
@@ -30,14 +28,6 @@ public class Optionals {
 
     public void setOpenFile(boolean openFile) {
 	this.openFile = openFile;
-    }
-
-    public boolean isCaseSensitive() {
-	return caseSensitive;
-    }
-
-    public void setCaseSensitive(boolean caseSensitive) {
-	this.caseSensitive = caseSensitive;
     }
 
     public String getFileEnding() {

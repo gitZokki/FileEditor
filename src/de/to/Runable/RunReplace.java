@@ -1,17 +1,14 @@
 package de.to.Runable;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.nio.file.Path;
 
 public class RunReplace extends AbstractRun {
 
     String toReplace, replacement;
 
-    public RunReplace(File file, String toReplace, String replacement) {
-	super(file);
+    public RunReplace(Path path, String toReplace, String replacement) {
+	super(path);
+	initReaderAndWriter();
 	this.toReplace = toReplace;
 	this.replacement = replacement;
     }
@@ -25,17 +22,13 @@ public class RunReplace extends AbstractRun {
 
     private void replace() {
 	try {
-	    BufferedReader br = new BufferedReader(new FileReader(file));
-	    File f = new File(file.getAbsolutePath() + "-copy");
-	    BufferedWriter bw = new BufferedWriter(new FileWriter(f));
-
 	    br.lines().forEach(line -> {
 		try {
 		    String old = line;
 		    line = line.replaceAll(toReplace, replacement);
 
 		    if (old.contentEquals(line)) {
-			edited = file;
+			edited = path;
 		    }
 
 		    bw.append(line);
@@ -44,10 +37,6 @@ public class RunReplace extends AbstractRun {
 		    e.printStackTrace();
 		}
 	    });
-	    bw.close();
-	    br.close();
-	    file.delete();
-	    f.renameTo(file);
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}

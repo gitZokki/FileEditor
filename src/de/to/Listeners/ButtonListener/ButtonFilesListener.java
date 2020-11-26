@@ -21,7 +21,7 @@ public class ButtonFilesListener extends Listeners {
 	    public void actionPerformed(ActionEvent e) {
 		// JFileChooser chooser = new JFileChooser("C:\\Developement\\git"); // TODO
 		// properties
-		JFileChooser chooser = new JFileChooser("C:\\Developement\\git\\SMART-454\\src");
+		JFileChooser chooser = new JFileChooser("C:\\Developement\\git\\TESTING");
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		chooser.showOpenDialog(null);
 

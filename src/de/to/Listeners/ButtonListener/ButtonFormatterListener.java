@@ -2,8 +2,8 @@ package de.to.Listeners.ButtonListener;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -24,9 +24,9 @@ public class ButtonFormatterListener extends Listeners {
 	return new ActionListener() {
 	    @Override
 	    public void actionPerformed(ActionEvent e) {
-		List<File> files = FileFinder.getAllFilesForFormatting();
-		int size = files.size();
-
+		List<Path> paths = FileFinder.getAllFilesForFormatting();
+		int size = paths.size();
+		
 		if (size == 0) {
 		    MessageDialog.showNotFoundDialog("No files found");
 		    return;
@@ -42,7 +42,7 @@ public class ButtonFormatterListener extends Listeners {
 		UIManager.put("ProgressMonitor.progressText", "Find in files");
 		new Thread(() -> {
 		    ProgressMonitor pm = new ProgressMonitor(FileEditor.getGuiInstance().getContentPane(),
-			    "Searching...", "Task starting", 0, size - 1);
+			    "Formatting...", "Task starting", 0, size - 1);
 
 		    pm.setMillisToDecideToPopup(100);
 		    pm.setMillisToPopup(100);
@@ -58,10 +58,10 @@ public class ButtonFormatterListener extends Listeners {
 				e1.printStackTrace();
 			    }
 			}
-			new Thread(new RunFormatter(files.get(i))).start();
+			new Thread(new RunFormatter(paths.get(i))).start();
 		    }
 		    pm.setNote("Task finished");
-		    System.out.println("Formatting-time: " + (System.currentTimeMillis() - start));
+		    System.out.println("Time for formatting: " + (System.currentTimeMillis() - start));
 		}).start();
 	    }
 	};
